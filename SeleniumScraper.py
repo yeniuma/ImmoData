@@ -2,11 +2,8 @@ from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
-
-# from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.common.exceptions import NoSuchElementException
-from selenium.webdriver.support import expected_conditions as EC
 from random import randrange
 import time
 import pandas as pd
@@ -16,6 +13,7 @@ page = "https://www.immobilienscout24.de/Suche/at/wien/wien/wohnung-mieten?price
 city = "Vienna"
 NA = "NA"
 
+#implementalando: figyelje az id-t, hogy ne exportaljon duplicate listinget, scraping elejen be kell olvasnia a mar meglevo id-kat
 
 class textHelper:
     def __init__(self, text) -> None:
@@ -77,6 +75,7 @@ def scrape_immoscout_rentals(city):
     while True:
         print("{} {} {} {}".format("scraping page", i, "from", city))
 
+        id_list = []
         property_type_list = []
         address_list = []
         region_and_country_list = []
@@ -111,12 +110,12 @@ def scrape_immoscout_rentals(city):
             if listing.get_attribute("class") != "result-list__listing ":
                 continue
             else:
+                _id = listing.get_attribute("data-id")
                 listing.find_element(
                     by=By.CSS_SELECTOR,
                     value=".result-list-entry__brand-title.font-h6.onlyLarge.font-ellipsis.font-regular.nine-tenths",
                 ).click()
                 time.sleep(3)
-
             property_type = check_find_elements(
                 ".is24qa-typ.grid-item.three-fifths", driver
             ).text
@@ -140,10 +139,8 @@ def scrape_immoscout_rentals(city):
             bathrooms = check_find_elements(
                 ".is24qa-badezimmer.grid-item.three-fifths", driver
             ).text
-            cold_price = check_find_elements(".is24-preis-value", driver).text
-            cold_price_per_sqm = check_find_elements(
-                ".is24qa-kaltmiete-main-label.is24-label.font-s", driver
-            ).text
+            cold_price = check_find_elements(".is24qa-kaltmiete.grid-item.three-fifths", driver).text.replace('.','').replace(',','.')
+            cold_price_per_sqm = driver.find_elements(by=By.XPATH,value='/html/body/div[2]/div[4]/div[1]/div/div[3]/div[2]/div[1]/div[2]/div[1]/div/div[2]/span')[0].text
             warm_price = check_find_elements(
                 ".is24qa-geschaetzte-warmmiete-main.is24-value.font-semibold", driver
             ).text
@@ -174,6 +171,7 @@ def scrape_immoscout_rentals(city):
             ).text
             property_url = driver.current_url
 
+            id_list.append(_id)
             property_type_list.append(property_type)
             address_list.append(address)
             region_and_country_list.append(region_and_country)
@@ -202,6 +200,7 @@ def scrape_immoscout_rentals(city):
 
         temp_df = pd.DataFrame(
             {
+                "ID": id_list,
                 "Property_type": property_type_list,
                 "Street": street_list,
                 "Region_and_country": region_and_country_list,
