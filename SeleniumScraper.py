@@ -7,13 +7,17 @@ from selenium.common.exceptions import NoSuchElementException
 from random import randrange
 import time
 import pandas as pd
+import glob
+import os
 
 
 page = "https://www.immobilienscout24.de/Suche/at/wien/wien/wohnung-mieten?pricetype=rentpermonth&enteredFrom=result_list"
 city = "Vienna"
 NA = "NA"
 
-#implementalando: figyelje az id-t, hogy ne exportaljon duplicate listinget, scraping elejen be kell olvasnia a mar meglevo id-kat
+# implementalando: figyelje az id-t, hogy ne exportaljon duplicate listinget, scraping elejen be kell olvasnia a mar meglevo id-kat, scrapeles elott allitsa at a listing sorrendet
+# legujabb eloszorre
+
 
 class textHelper:
     def __init__(self, text) -> None:
@@ -33,20 +37,58 @@ def driver_startup(url):
     driver = webdriver.Chrome(service=service_path, options=options)
     driver.get(url)
     # driver.implicitly_wait(40)
-    ##accept_cookies = WebDriverWait(driver, 60).until(EC.element_to_be_clickable((By.XPATH,'//*[@id="uc-center-container"]/div[2]/div/div/div/button[2]')))
+    # accept_cookies = WebDriverWait(driver, 60).until(EC.element_to_be_clickable((By.XPATH,'//*[@id="uc-center-container"]/div[2]/div/div/div/button[2]')))
     # driver.execute_script("arguments[0].click()", accept_cookies)
     # driver.find_element(by=By.XPATH, value='/html/body/div[6]//div/div/div[2]/div/div[2]/div/div[2]/div/div/div/button[2]').click()
     time.sleep(20)
     return driver
 
 
+def check_for_last_button(driver):
+    try:
+        driver.find_element(
+            by=By.CSS_SELECTOR,
+            value=".p-items.p-next.vertical-center-container.disabled",
+        )
+        return True
+    except NoSuchElementException:
+        driver.find_element(
+            by=By.CSS_SELECTOR, value=".p-items.p-next.vertical-center-container"
+        ).click()
+        return False
+
+
+def check_if_id_already_in_export(driver):
+    path = "F:\ImmoData"
+    all_csvs = glob.glob(os.path.join(path, "\*.csv"))
+    df = pd.concat((pd.read_csv(f) for f in all_csvs), ignore_index=True)
+    exported_ids = df["ID"].tolist()
+    online_listing_ids = []
+    i = 1
+    while True:
+        parent_element = driver.find_element(by=By.ID, value="resultListItems")
+        num_listings = len(
+            parent_element.find_elements(by=By.XPATH, value="./child::*")
+        )
+        for j in range(num_listings):
+            parent_element = driver.find_element(by=By.ID, value="resultListItems")
+            listing = parent_element.find_elements(by=By.XPATH, value="./child::*")[j]
+            if listing.get_attribute("class") != "result-list__listing ":
+                continue
+            else:
+                online_listing_ids.append(listing.get_attribute("data-id"))
+        if check_for_last_button(driver):
+            break
+        i += 1
+    ids_to_read = list(set(exported_ids) - set(online_listing_ids))
+    return ids_to_read
+
+
 def check_find_elements(selector_value, driver):
     if (
         len(driver.find_elements(by=By.CSS_SELECTOR, value=selector_value)) == 0
         or driver.find_elements(by=By.CSS_SELECTOR, value=selector_value)[0].text == ""
-        or driver.find_elements(by=By.CSS_SELECTOR, value=selector_value)[
-            0
-        ].text.isspace()
+        or driver.find_elements(by=By.CSS_SELECTOR, value=selector_value)[0].text.isspace()
     ):
         temp = textHelper(NA)
     else:
@@ -65,7 +107,7 @@ def check_labels_element(driver):
     labels_child_elements = labels_parent_element.find_elements(
         by=By.XPATH, value="./child::*"
     )
-    return ",".join([k.text for k in labels_child_elements if k.text != ''])
+    return ",".join([k.text for k in labels_child_elements if k.text != ""])
 
 
 def scrape_immoscout_rentals(city):
@@ -139,8 +181,15 @@ def scrape_immoscout_rentals(city):
             bathrooms = check_find_elements(
                 ".is24qa-badezimmer.grid-item.three-fifths", driver
             ).text
-            cold_price = check_find_elements(".is24qa-kaltmiete.grid-item.three-fifths", driver).text.replace('.','').replace(',','.')
-            cold_price_per_sqm = driver.find_elements(by=By.XPATH,value='/html/body/div[2]/div[4]/div[1]/div/div[3]/div[2]/div[1]/div[2]/div[1]/div/div[2]/span')[0].text
+            cold_price = (
+                check_find_elements(".is24qa-kaltmiete.grid-item.three-fifths", driver)
+                .text.replace(".", "")
+                .replace(",", ".")
+            )
+            cold_price_per_sqm = driver.find_elements(
+                by=By.XPATH,
+                value="/html/body/div[2]/div[4]/div[1]/div/div[3]/div[2]/div[1]/div[2]/div[1]/div/div[2]/span",
+            )[0].text
             warm_price = check_find_elements(
                 ".is24qa-geschaetzte-warmmiete-main.is24-value.font-semibold", driver
             ).text
@@ -226,25 +275,12 @@ def scrape_immoscout_rentals(city):
         )
         temp_df.to_csv(f"{city}rentals_{i}_page.csv", encoding="utf-8-sig")
 
-        last_button_found = False
-        try:
-            driver.find_element(
-                by=By.CSS_SELECTOR,
-                value=".p-items.p-next.vertical-center-container.disabled",
-            )
-            last_button_found = True
-        except NoSuchElementException:
-            driver.find_element(
-                by=By.CSS_SELECTOR, value=".p-items.p-next.vertical-center-container"
-            ).click()
-
-        if last_button_found:
+        if check_for_last_button(driver):
             break
 
-        # ideiglenes
         i += 1
 
-        if i > 1:
+        if i > 2:
             break
         time.sleep(randrange(5, 10))
 
