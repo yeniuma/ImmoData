@@ -7,7 +7,6 @@ from selenium.common.exceptions import NoSuchElementException
 from random import randrange
 import time
 import pandas as pd
-import glob
 import os
 
 
@@ -44,43 +43,49 @@ def driver_startup(url):
     return driver
 
 
+def save_data(csv_export_name, df, exported_csvs):
+    print(csv_export_name)
+    print(exported_csvs)
+    if df.empty:
+        return 
+    elif csv_export_name in exported_csvs:
+        df.to_csv(csv_export_name, mode = 'a', encoding="utf-8-sig", header = False)
+    else:
+        df.to_csv(csv_export_name, encoding="utf-8-sig")
+
 def check_for_last_button(driver):
     try:
         driver.find_element(
             by=By.CSS_SELECTOR,
             value=".p-items.p-next.vertical-center-container.disabled",
         )
-        return True
+        return [True, None]
     except NoSuchElementException:
-        driver.find_element(
+        temp = driver.find_element(
             by=By.CSS_SELECTOR, value=".p-items.p-next.vertical-center-container"
-        ).click()
-        return False
-
-
-def check_if_id_already_in_export(driver):
-    path = "F:\ImmoData"
-    all_csvs = glob.glob(os.path.join(path, "\*.csv"))
-    df = pd.concat((pd.read_csv(f) for f in all_csvs), ignore_index=True)
-    exported_ids = df["ID"].tolist()
-    online_listing_ids = []
-    i = 1
-    while True:
-        parent_element = driver.find_element(by=By.ID, value="resultListItems")
-        num_listings = len(
-            parent_element.find_elements(by=By.XPATH, value="./child::*")
         )
-        for j in range(num_listings):
-            parent_element = driver.find_element(by=By.ID, value="resultListItems")
-            listing = parent_element.find_elements(by=By.XPATH, value="./child::*")[j]
-            if listing.get_attribute("class") != "result-list__listing ":
-                continue
-            else:
-                online_listing_ids.append(listing.get_attribute("data-id"))
-        if check_for_last_button(driver):
-            break
-        i += 1
-    ids_to_read = list(set(exported_ids) - set(online_listing_ids))
+        return [False, temp]
+
+
+def check_if_id_already_in_export(driver,exported_csvs):
+    if len(exported_csvs) == 0:
+        exported_ids = list()
+    else:
+        df = pd.concat((pd.read_csv(f) for f in exported_csvs), ignore_index=True)
+        exported_ids = df["ID"].tolist()
+    online_listing_ids = []
+    parent_element = driver.find_element(by=By.ID, value="resultListItems")
+    num_listings = len(
+        parent_element.find_elements(by=By.XPATH, value="./child::*")
+    )
+    for j in range(num_listings):
+        parent_element = driver.find_element(by=By.ID, value="resultListItems")
+        listing = parent_element.find_elements(by=By.XPATH, value="./child::*")[j]
+        if listing.get_attribute("class") != "result-list__listing ":
+            continue
+        else:
+            online_listing_ids.append(listing.get_attribute("data-id"))
+    ids_to_read = list(set(online_listing_ids) - set(exported_ids))
     return ids_to_read
 
 
@@ -111,11 +116,17 @@ def check_labels_element(driver):
 
 
 def scrape_immoscout_rentals(city):
+    path = os.listdir("/ImmoData")
+    all_csvs = list(filter(lambda f: f.endswith(".csv"), path))
+
     driver = driver_startup(page)
+
+    timestamp = time.time()
 
     i = 1
     while True:
         print("{} {} {} {}".format("scraping page", i, "from", city))
+        ids_to_read = check_if_id_already_in_export(driver, all_csvs)
 
         id_list = []
         property_type_list = []
@@ -140,6 +151,7 @@ def scrape_immoscout_rentals(city):
         status_list = []
         desc_list = []
         property_url_list = []
+        time_list = []
 
         parent_element = driver.find_element(by=By.ID, value="resultListItems")
         num_listings = len(
@@ -151,13 +163,17 @@ def scrape_immoscout_rentals(city):
             listing = parent_element.find_elements(by=By.XPATH, value="./child::*")[j]
             if listing.get_attribute("class") != "result-list__listing ":
                 continue
-            else:
-                _id = listing.get_attribute("data-id")
-                listing.find_element(
-                    by=By.CSS_SELECTOR,
-                    value=".result-list-entry__brand-title.font-h6.onlyLarge.font-ellipsis.font-regular.nine-tenths",
-                ).click()
-                time.sleep(3)
+
+            _id = listing.get_attribute("data-id")
+            if _id not in ids_to_read:
+                continue
+                
+            listing.find_element(
+                by=By.CSS_SELECTOR,
+                value=".result-list-entry__brand-title.font-h6.onlyLarge.font-ellipsis.font-regular.nine-tenths",
+            ).click()
+            time.sleep(3)
+
             property_type = check_find_elements(
                 ".is24qa-typ.grid-item.three-fifths", driver
             ).text
@@ -243,6 +259,7 @@ def scrape_immoscout_rentals(city):
             status_list.append(status)
             desc_list.append(desc)
             property_url_list.append(property_url)
+            time_list.append(timestamp)
 
             driver.back()
             time.sleep(5)
@@ -271,13 +288,16 @@ def scrape_immoscout_rentals(city):
                 "Status": status_list,
                 "Desc": desc_list,
                 "URL": property_url_list,
+                "Time": time_list
             }
         )
-        temp_df.to_csv(f"{city}rentals_{i}_page.csv", encoding="utf-8-sig")
+        csv_export_name = f"{city}_rentals_{i}_page.csv"
+        save_data(csv_export_name,temp_df,all_csvs)
 
-        if check_for_last_button(driver):
+        button_check = check_for_last_button(driver)
+        if button_check[0]:
             break
-
+        button_check[1].click()
         i += 1
 
         if i > 2:
