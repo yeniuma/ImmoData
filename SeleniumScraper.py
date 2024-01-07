@@ -3,19 +3,19 @@ from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import NoSuchElementException
 from random import randrange
 import time
 import pandas as pd
 import os
+import speech_recognition as sr
 
 
 page = "https://www.immobilienscout24.de/Suche/at/wien/wien/wohnung-mieten?pricetype=rentpermonth&enteredFrom=result_list"
 city = "Vienna"
 NA = "NA"
-
-# implementalando: figyelje az id-t, hogy ne exportaljon duplicate listinget, scraping elejen be kell olvasnia a mar meglevo id-kat, scrapeles elott allitsa at a listing sorrendet
-# legujabb eloszorre
+r = sr.Recognizer()
 
 
 class textHelper:
@@ -32,14 +32,14 @@ def driver_startup(url):
     options = Options()
     # options.add_argument('--headless=new')
     # options.add_argument('--disable-notifications')
-    options.add_argument("--mute-audio")
+    #options.add_argument("--mute-audio")
     driver = webdriver.Chrome(service=service_path, options=options)
     driver.get(url)
     # driver.implicitly_wait(40)
     # accept_cookies = WebDriverWait(driver, 60).until(EC.element_to_be_clickable((By.XPATH,'//*[@id="uc-center-container"]/div[2]/div/div/div/button[2]')))
     # driver.execute_script("arguments[0].click()", accept_cookies)
     # driver.find_element(by=By.XPATH, value='/html/body/div[6]//div/div/div[2]/div/div[2]/div/div[2]/div/div/div/button[2]').click()
-    time.sleep(20)
+    time.sleep(1000)
     return driver
 
 
@@ -89,15 +89,15 @@ def check_if_id_already_in_export(driver,exported_csvs):
     return ids_to_read
 
 
-def check_find_elements(selector_value, driver):
+def check_find_elements(selector_value, driver, by):
     if (
-        len(driver.find_elements(by=By.CSS_SELECTOR, value=selector_value)) == 0
-        or driver.find_elements(by=By.CSS_SELECTOR, value=selector_value)[0].text == ""
-        or driver.find_elements(by=By.CSS_SELECTOR, value=selector_value)[0].text.isspace()
+        len(driver.find_elements(by=by, value=selector_value)) == 0
+        or driver.find_elements(by=by, value=selector_value)[0].text == ""
+        or driver.find_elements(by=by, value=selector_value)[0].text.isspace()
     ):
         temp = textHelper(NA)
     else:
-        temp = driver.find_elements(by=By.CSS_SELECTOR, value=selector_value)[0]
+        temp = driver.find_elements(by=by, value=selector_value)[0]
     return temp
 
 
@@ -117,7 +117,6 @@ def check_labels_element(driver):
 
 def scrape_immoscout_rentals(city):
     path = os.listdir("/ImmoData")
-    all_csvs = list(filter(lambda f: f.endswith(".csv"), path))
 
     driver = driver_startup(page)
 
@@ -126,6 +125,7 @@ def scrape_immoscout_rentals(city):
     i = 1
     while True:
         print("{} {} {} {}".format("scraping page", i, "from", city))
+        all_csvs = list(filter(lambda f: f.endswith(".csv"), path))
         ids_to_read = check_if_id_already_in_export(driver, all_csvs)
 
         id_list = []
@@ -159,7 +159,7 @@ def scrape_immoscout_rentals(city):
         )
 
         for j in range(num_listings):
-            parent_element = driver.find_element(by=By.ID, value="resultListItems")
+            parent_element = WebDriverWait(driver,30000).until(EC.presence_of_element_located((By.ID,"resultListItems")))
             listing = parent_element.find_elements(by=By.XPATH, value="./child::*")[j]
             if listing.get_attribute("class") != "result-list__listing ":
                 continue
@@ -175,64 +175,63 @@ def scrape_immoscout_rentals(city):
             time.sleep(3)
 
             property_type = check_find_elements(
-                ".is24qa-typ.grid-item.three-fifths", driver
+                ".is24qa-typ.grid-item.three-fifths", driver, By.CSS_SELECTOR
             ).text
-            address = check_find_elements(".address-block", driver).text
+            address = check_find_elements(".address-block", driver, By.CSS_SELECTOR).text
             region_and_country = check_find_elements(
-                ".zip-region-and-country", driver
+                ".zip-region-and-country", driver, By.CSS_SELECTOR
             ).text
-            street = check_find_elements(".block.font-nowrap.print-hide", driver).text
+            street = check_find_elements(".block.font-nowrap.print-hide", driver, By.CSS_SELECTOR).text
             apartment_size = check_find_elements(
-                ".is24qa-wohnflaeche-ca.grid-item.three-fifths", driver
+                ".is24qa-wohnflaeche-ca.grid-item.three-fifths", driver, By.CSS_SELECTOR
             ).text
             floor = check_find_elements(
-                ".is24qa-etage.grid-item.three-fifths", driver
+                ".is24qa-etage.grid-item.three-fifths", driver, By.CSS_SELECTOR
             ).text
             able_to_move_in = check_find_elements(
-                ".is24qa-bezugsfrei-ab.grid-item.three-fifths", driver
+                ".is24qa-bezugsfrei-ab.grid-item.three-fifths", driver, By.CSS_SELECTOR
             ).text
             rooms = check_find_elements(
-                ".is24qa-zimmer.grid-item.three-fifths", driver
+                ".is24qa-zimmer.grid-item.three-fifths", driver, By.CSS_SELECTOR
             ).text
             bathrooms = check_find_elements(
-                ".is24qa-badezimmer.grid-item.three-fifths", driver
+                ".is24qa-badezimmer.grid-item.three-fifths", driver, By.CSS_SELECTOR
             ).text
             cold_price = (
-                check_find_elements(".is24qa-kaltmiete.grid-item.three-fifths", driver)
+                check_find_elements(".is24qa-kaltmiete.grid-item.three-fifths", driver, By.CSS_SELECTOR)
                 .text.replace(".", "")
                 .replace(",", ".")
             )
-            cold_price_per_sqm = driver.find_elements(
-                by=By.XPATH,
-                value="/html/body/div[2]/div[4]/div[1]/div/div[3]/div[2]/div[1]/div[2]/div[1]/div/div[2]/span",
-            )[0].text
+            cold_price_per_sqm = check_find_elements(
+                "/html/body/div[2]/div[4]/div[1]/div/div[3]/div[2]/div[1]/div[2]/div[1]/div/div[2]/span", driver, By.XPATH
+            ).text
             warm_price = check_find_elements(
-                ".is24qa-geschaetzte-warmmiete-main.is24-value.font-semibold", driver
+                ".is24qa-geschaetzte-warmmiete-main.is24-value.font-semibold", driver, By.CSS_SELECTOR
             ).text
             labels = check_labels_element(driver)
             pets_allowed = check_find_elements(
-                ".is24qa-haustiere.grid-item.three-fifths", driver
+                ".is24qa-haustiere.grid-item.three-fifths", driver, By.CSS_SELECTOR
             ).text
             year_built = check_find_elements(
-                ".is24qa-baujahr.grid-item.three-fifths", driver
+                ".is24qa-baujahr.grid-item.three-fifths", driver, By.CSS_SELECTOR
             ).text
             heating = check_find_elements(
-                ".is24qa-heizungsart.grid-item.three-fifths", driver
+                ".is24qa-heizungsart.grid-item.three-fifths", driver, By.CSS_SELECTOR
             ).text
             heating_price = check_find_elements(
-                ".is24qa-heizkosten.grid-item.three-fifths", driver
+                ".is24qa-heizkosten.grid-item.three-fifths", driver, By.CSS_SELECTOR
             ).text
             parking = check_find_elements(
-                ".is24qa-garage-stellplatz.grid-item.three-fifths", driver
+                ".is24qa-garage-stellplatz.grid-item.three-fifths", driver, By.CSS_SELECTOR
             ).text
             deposit = check_find_elements(
-                ".is24qa-kaution-o-genossenschaftsanteile", driver
+                ".is24qa-kaution-o-genossenschaftsanteile", driver, By.CSS_SELECTOR
             ).text
             status = check_find_elements(
-                ".is24qa-objektzustand.grid-item.three-fifths", driver
+                ".is24qa-objektzustand.grid-item.three-fifths", driver, By.CSS_SELECTOR
             ).text
             desc = check_find_elements(
-                ".is24qa-objektbeschreibung.text-content.short-text", driver
+                ".is24qa-objektbeschreibung.text-content.short-text", driver, By.CSS_SELECTOR
             ).text
             property_url = driver.current_url
 
@@ -299,9 +298,6 @@ def scrape_immoscout_rentals(city):
             break
         button_check[1].click()
         i += 1
-
-        if i > 2:
-            break
         time.sleep(randrange(5, 10))
 
 
