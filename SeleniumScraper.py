@@ -32,7 +32,7 @@ def driver_startup(url):
     options = Options()
     # options.add_argument('--headless=new')
     # options.add_argument('--disable-notifications')
-    #options.add_argument("--mute-audio")
+    # options.add_argument("--mute-audio")
     driver = webdriver.Chrome(service=service_path, options=options)
     driver.get(url)
     # driver.implicitly_wait(40)
@@ -44,11 +44,12 @@ def save_data(csv_export_name, df, exported_csvs):
     print(csv_export_name)
     print(exported_csvs)
     if df.empty:
-        return 
+        return
     elif csv_export_name in exported_csvs:
-        df.to_csv(csv_export_name, mode = 'a', encoding="utf-8-sig", header = False)
+        df.to_csv(csv_export_name, mode="a", encoding="utf-8-sig", header=False)
     else:
         df.to_csv(csv_export_name, encoding="utf-8-sig")
+
 
 def check_for_last_button(driver):
     try:
@@ -64,7 +65,7 @@ def check_for_last_button(driver):
         return [False, temp]
 
 
-def check_if_id_already_in_export(driver,exported_csvs):
+def check_if_id_already_in_export(driver, exported_csvs):
     if len(exported_csvs) == 0:
         exported_ids = list()
     else:
@@ -72,9 +73,7 @@ def check_if_id_already_in_export(driver,exported_csvs):
         exported_ids = df["ID"].tolist()
     online_listing_ids = []
     parent_element = driver.find_element(by=By.ID, value="resultListItems")
-    num_listings = len(
-        parent_element.find_elements(by=By.XPATH, value="./child::*")
-    )
+    num_listings = len(parent_element.find_elements(by=By.XPATH, value="./child::*"))
     for j in range(num_listings):
         parent_element = driver.find_element(by=By.ID, value="resultListItems")
         listing = parent_element.find_elements(by=By.XPATH, value="./child::*")[j]
@@ -156,7 +155,9 @@ def scrape_immoscout_rentals(city):
         )
 
         for j in range(num_listings):
-            parent_element = WebDriverWait(driver,30000).until(EC.presence_of_element_located((By.ID,"resultListItems")))
+            parent_element = WebDriverWait(driver, 30000).until(
+                EC.presence_of_element_located((By.ID, "resultListItems"))
+            )
             listing = parent_element.find_elements(by=By.XPATH, value="./child::*")[j]
             if listing.get_attribute("class") != "result-list__listing ":
                 continue
@@ -164,7 +165,7 @@ def scrape_immoscout_rentals(city):
             _id = listing.get_attribute("data-id")
             if _id not in ids_to_read:
                 continue
-                
+
             listing.find_element(
                 by=By.CSS_SELECTOR,
                 value=".result-list-entry__brand-title.font-h6.onlyLarge.font-ellipsis.font-regular.nine-tenths",
@@ -174,11 +175,15 @@ def scrape_immoscout_rentals(city):
             property_type = check_find_elements(
                 ".is24qa-typ.grid-item.three-fifths", driver, By.CSS_SELECTOR
             ).text
-            address = check_find_elements(".address-block", driver, By.CSS_SELECTOR).text
+            address = check_find_elements(
+                ".address-block", driver, By.CSS_SELECTOR
+            ).text
             region_and_country = check_find_elements(
                 ".zip-region-and-country", driver, By.CSS_SELECTOR
             ).text
-            street = check_find_elements(".block.font-nowrap.print-hide", driver, By.CSS_SELECTOR).text
+            street = check_find_elements(
+                ".block.font-nowrap.print-hide", driver, By.CSS_SELECTOR
+            ).text
             apartment_size = check_find_elements(
                 ".is24qa-wohnflaeche-ca.grid-item.three-fifths", driver, By.CSS_SELECTOR
             ).text
@@ -195,15 +200,21 @@ def scrape_immoscout_rentals(city):
                 ".is24qa-badezimmer.grid-item.three-fifths", driver, By.CSS_SELECTOR
             ).text
             cold_price = (
-                check_find_elements(".is24qa-kaltmiete.grid-item.three-fifths", driver, By.CSS_SELECTOR)
+                check_find_elements(
+                    ".is24qa-kaltmiete.grid-item.three-fifths", driver, By.CSS_SELECTOR
+                )
                 .text.replace(".", "")
                 .replace(",", ".")
             )
             cold_price_per_sqm = check_find_elements(
-                "/html/body/div[2]/div[4]/div[1]/div/div[3]/div[2]/div[1]/div[2]/div[1]/div/div[2]/span", driver, By.XPATH
+                "/html/body/div[2]/div[4]/div[1]/div/div[3]/div[2]/div[1]/div[2]/div[1]/div/div[2]/span",
+                driver,
+                By.XPATH,
             ).text
             warm_price = check_find_elements(
-                ".is24qa-geschaetzte-warmmiete-main.is24-value.font-semibold", driver, By.CSS_SELECTOR
+                ".is24qa-geschaetzte-warmmiete-main.is24-value.font-semibold",
+                driver,
+                By.CSS_SELECTOR,
             ).text
             labels = check_labels_element(driver)
             pets_allowed = check_find_elements(
@@ -219,7 +230,9 @@ def scrape_immoscout_rentals(city):
                 ".is24qa-heizkosten.grid-item.three-fifths", driver, By.CSS_SELECTOR
             ).text
             parking = check_find_elements(
-                ".is24qa-garage-stellplatz.grid-item.three-fifths", driver, By.CSS_SELECTOR
+                ".is24qa-garage-stellplatz.grid-item.three-fifths",
+                driver,
+                By.CSS_SELECTOR,
             ).text
             deposit = check_find_elements(
                 ".is24qa-kaution-o-genossenschaftsanteile", driver, By.CSS_SELECTOR
@@ -228,7 +241,9 @@ def scrape_immoscout_rentals(city):
                 ".is24qa-objektzustand.grid-item.three-fifths", driver, By.CSS_SELECTOR
             ).text
             desc = check_find_elements(
-                ".is24qa-objektbeschreibung.text-content.short-text", driver, By.CSS_SELECTOR
+                ".is24qa-objektbeschreibung.text-content.short-text",
+                driver,
+                By.CSS_SELECTOR,
             ).text
             property_url = driver.current_url
 
@@ -284,11 +299,11 @@ def scrape_immoscout_rentals(city):
                 "Status": status_list,
                 "Desc": desc_list,
                 "URL": property_url_list,
-                "Time": time_list
+                "Time": time_list,
             }
         )
         csv_export_name = f"{city}_rentals_{i}_page.csv"
-        save_data(csv_export_name,temp_df,all_csvs)
+        save_data(csv_export_name, temp_df, all_csvs)
 
         button_check = check_for_last_button(driver)
         if button_check[0]:
