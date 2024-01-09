@@ -4,6 +4,7 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.common.exceptions import NoSuchElementException
 import time
 import speech_recognition as sr
 import requests
@@ -17,14 +18,25 @@ service_path = Service(executable_path="F:/ChromeDriver/chromedriver.exe")
 options = Options()
 driver = webdriver.Chrome(service=service_path, options=options)
 driver.get(page)
+time.sleep(1)
 
-def save_captcha_audio(driver, path, try_again=False):
-    if try_again:
-        WebDriverWait(driver,10).until(EC.presence_of_element_located((By.CLASS_NAME,"geetest_refresh"))).click()
-    else:
-        WebDriverWait(driver,10).until(EC.presence_of_element_located((By.CLASS_NAME,"geetest_radar_tip"))).click()
-        WebDriverWait(driver,10).until(EC.presence_of_element_located((By.CLASS_NAME,"geetest_voice"))).click()
-    time.sleep(10)
+
+def click_not_robot(driver):
+    print("click_not_robot")
+    WebDriverWait(driver,10).until(EC.presence_of_element_located((By.CLASS_NAME,"geetest_radar_tip"))).click()
+    time.sleep(5)
+    try:
+        driver.find_element(By.CLASS_NAME,"geetest_popup_box")
+        return True
+    except NoSuchElementException: 
+        return False
+
+def enter_captcha_voice(driver):
+    WebDriverWait(driver,10).until(EC.presence_of_element_located((By.CLASS_NAME,"geetest_voice"))).click()
+    time.sleep(5)
+
+def save_captcha_audio(driver, path):
+    print("save_captcha")
     audio_src = WebDriverWait(driver,10).until(EC.presence_of_element_located((By.CLASS_NAME,"geetest_music"))).get_attribute('src')
     content = requests.get(audio_src).content
     open(path +'/captcha_file.wav', 'wb').write(content)
@@ -32,30 +44,63 @@ def save_captcha_audio(driver, path, try_again=False):
     soundfile.write(path + '/captcha_file_new.wav', data, samplerate, subtype='PCM_16')
 
 
-def transcribe_audio_file(driver, captcha_source):
+def attempt_captcha(driver, path):
+    print("attempt_captcha")
     r = sr.Recognizer()
-    captcha_not_solved = True
-    while captcha_not_solved:
-        with sr.AudioFile(captcha_source) as source:
-            audio = r.listen(source)
+    with sr.AudioFile(path + '/captcha_file_new.wav') as source:
+        audio = r.listen(source)
+        try:
+            text = r.recognize_vosk(audio,language='de').replace('geben sie ein was sie hören','')
+            for key, value in nums.items():
+                text = text.replace(key, value)
+            text = text.replace(' ','')
+            text = re.findall('[0-9]+',text)[0]
+            print(f"text from audio: {text}")
+            driver.find_element(by=By.CLASS_NAME,value='geetest_input').clear()
+            driver.find_element(by=By.CLASS_NAME,value='geetest_input').click()
+            driver.find_element(by=By.CLASS_NAME,value='geetest_input').send_keys(text)
+            time.sleep(5)
+            WebDriverWait(driver,10).until(EC.element_to_be_clickable((By.CLASS_NAME,"geetest_submit"))).click()
+            time.sleep(5)
             try:
-                text = r.recognize_vosk(audio,language='de').replace('geben sie ein was sie hören','')
-                for key, value in nums.items():
-                    text = text.replace(key, value)
-                text = text.replace(' ','')
-                text = re.findall('[0-9]+',text)[0]
-                driver.find_element(by=By.CLASS_NAME,value='geetest_input').clear()
-                driver.find_element(by=By.CLASS_NAME,value='geetest_input').click()
-                time.sleep(3)
-                driver.find_element(by=By.CLASS_NAME,value='geetest_input').send_keys(text)
-                WebDriverWait(driver,10).until(EC.element_to_be_clickable((By.CLASS_NAME,"geetest_submit"))).click()
-                if driver.find_element(by=By.CLASS_NAME,value="geetest_result_tip").is_displayed():
-                    save_captcha_audio(driver, try_again=True)
-                    continue
-                captcha_not_solved = False
-                time.sleep(15)
-            except sr.UnknownValueError:
-                save_captcha_audio(driver, try_again=True)
+                result_label = driver.find_element(by=By.CLASS_NAME,value="geetest_result_tip").get_attribute("aria-label")
+                print(f'attribute: {result_label}')
+                if result_label == 'Sorry, keine Übereinstimmung.':
+                    print("geetest_result_tip is present, listening failed")
+                    return False
+                else:
+                    return True
+            except NoSuchElementException:
+                print("geetest_result_tip has not been found, successful listening")
+                time.sleep(5)
+                return True
+        except sr.UnknownValueError:
+            print("unknown value error")
+            return False
 
-save_captcha_audio(driver,'F:/ImmoData/audio')
-transcribe_audio_file(driver,'F:/ImmoData/audio/captcha_file_new.wav')
+
+def refresh_captcha(driver):
+    print("refresh_captcha")
+    WebDriverWait(driver,10).until(EC.presence_of_element_located((By.CLASS_NAME,"geetest_refresh"))).click()
+    time.sleep(5)
+
+
+def solve_captcha(driver, path):
+    captcha_displayed = click_not_robot(driver)
+    if not captcha_displayed:
+        return
+    enter_captcha_voice(driver)
+    while True:
+        save_captcha_audio(driver, path)
+        if attempt_captcha(driver, path):
+            break
+        refresh_captcha(driver)
+
+        
+def accept_cookies(driver):
+    print("accept_cookies")
+    WebDriverWait(driver,100).until(EC.presence_of_element_located((By.CSS_SELECTOR,"button[data-testid='uc-accept-all-button'][role='button']"))).click()
+
+
+solve_captcha(driver, path = 'F:/ImmoData/audio')
+accept_cookies(driver)

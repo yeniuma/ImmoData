@@ -36,9 +36,6 @@ def driver_startup(url):
     driver = webdriver.Chrome(service=service_path, options=options)
     driver.get(url)
     # driver.implicitly_wait(40)
-    # accept_cookies = WebDriverWait(driver, 60).until(EC.element_to_be_clickable((By.XPATH,'//*[@id="uc-center-container"]/div[2]/div/div/div/button[2]')))
-    # driver.execute_script("arguments[0].click()", accept_cookies)
-    # driver.find_element(by=By.XPATH, value='/html/body/div[6]//div/div/div[2]/div/div[2]/div/div[2]/div/div/div/button[2]').click()
     time.sleep(1000)
     return driver
 
