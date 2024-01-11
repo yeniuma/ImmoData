@@ -10,6 +10,7 @@ import time
 import pandas as pd
 import os
 import speech_recognition as sr
+import CaptchaFunc as CF
 
 
 page = "https://www.immobilienscout24.de/Suche/at/wien/wien/wohnung-mieten?pricetype=rentpermonth&enteredFrom=result_list"

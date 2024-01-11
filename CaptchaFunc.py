@@ -128,15 +128,8 @@ def solve_captcha(driver, path):
 
 def accept_cookies(driver):
     print("accept_cookies")
-    WebDriverWait(driver, 100).until(
-        EC.presence_of_element_located(
-            (
-                By.CSS_SELECTOR,
-                "button[data-testid='uc-accept-all-button'][role='button']",
-            )
-        )
-    ).click()
-
-
-solve_captcha(driver, path="F:/ImmoData/audio")
-accept_cookies(driver)
+    button = driver.execute_script(
+        """return document.querySelector('div#usercentrics-root').shadowRoot.querySelector('button[data-testid="uc-accept-all-button"]')"""
+    )
+    button.click()
+    time.sleep(10)
