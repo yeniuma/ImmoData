@@ -25,11 +25,11 @@ nums = {
     "neun": "9",
 }
 
-service_path = Service(executable_path="F:/ChromeDriver/chromedriver.exe")
-options = Options()
-driver = webdriver.Chrome(service=service_path, options=options)
-driver.get(page)
-time.sleep(1)
+#service_path = Service(executable_path="F:/ChromeDriver/chromedriver.exe")
+#options = Options()
+#driver = webdriver.Chrome(service=service_path, options=options)
+#driver.get(page)
+#time.sleep(1)
 
 
 def click_not_robot(driver):

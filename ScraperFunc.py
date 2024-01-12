@@ -10,11 +10,7 @@ import time
 import pandas as pd
 import os
 import speech_recognition as sr
-import CaptchaFunc as CF
 
-
-page = "https://www.immobilienscout24.de/Suche/at/wien/wien/wohnung-mieten?pricetype=rentpermonth&enteredFrom=result_list"
-city = "Vienna"
 NA = "NA"
 r = sr.Recognizer()
 
@@ -112,10 +108,8 @@ def check_labels_element(driver):
     return ",".join([k.text for k in labels_child_elements if k.text != ""])
 
 
-def scrape_immoscout_rentals(city):
+def scrape_immoscout_rentals(driver, city):
     path = os.listdir("/ImmoData")
-
-    driver = driver_startup(page)
 
     timestamp = time.time()
 
@@ -312,6 +306,3 @@ def scrape_immoscout_rentals(city):
         button_check[1].click()
         i += 1
         time.sleep(randrange(5, 10))
-
-
-scrape_immoscout_rentals("Vienna")
