@@ -130,7 +130,6 @@ def scrape_immoscout_rentals(driver, city):
         rooms_list = []
         bathrooms_list = []
         cold_price_list = []
-        cold_price_per_sqm_list = []
         warm_price_list = []
         labels_list = []
         pets_allowed_list = []
@@ -201,11 +200,6 @@ def scrape_immoscout_rentals(driver, city):
                 .text.replace(".", "")
                 .replace(",", ".")
             )
-            cold_price_per_sqm = check_find_elements(
-                "/html/body/div[2]/div[4]/div[1]/div/div[3]/div[2]/div[1]/div[2]/div[1]/div/div[2]/span",
-                driver,
-                By.XPATH,
-            ).text
             warm_price = check_find_elements(
                 ".is24qa-geschaetzte-warmmiete-main.is24-value.font-semibold",
                 driver,
@@ -253,7 +247,6 @@ def scrape_immoscout_rentals(driver, city):
             rooms_list.append(rooms)
             bathrooms_list.append(bathrooms)
             cold_price_list.append(cold_price)
-            cold_price_per_sqm_list.append(cold_price_per_sqm)
             warm_price_list.append(warm_price)
             labels_list.append(labels)
             pets_allowed_list.append(pets_allowed)
@@ -282,7 +275,6 @@ def scrape_immoscout_rentals(driver, city):
                 "Nr_of_rooms": rooms_list,
                 "Nr_of_bathrooms": bathrooms_list,
                 "Cold_price": cold_price_list,
-                "Cold_price_per_sqm": cold_price_per_sqm_list,
                 "Warm_price": warm_price_list,
                 "Labels": labels_list,
                 "Pets_allowed": pets_allowed_list,

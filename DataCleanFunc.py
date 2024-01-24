@@ -8,7 +8,6 @@ csv_files = glob.glob(path + "/*.csv")
 df_list = (pd.read_csv(file,keep_default_na=False) for file in csv_files)
 data = pd.concat(df_list, ignore_index=True)
 
-
 latitude = {
     " 01. Bezirk": "48.20863297021143",
     " 02. Bezirk": "48.203617523797035",
@@ -65,35 +64,38 @@ longitude = {
 
 
 data[["Apt_size", "Apt_size_unit"]] = data["Apt_size"].str.split(" ", expand=True)
-data[["Cold_price", "Cold_price_unit"]] = data["Cold_price"].str.split(" ", expand=True)
-data[["Cold_price_per_sqm", "Cold_price_per_sqm_unit"]] = data[
-    "Cold_price_per_sqm"
-].str.split(" ", expand=True)
+data[["Cold_price", "Cold_price_unit"]] = data["Cold_price"].str.split(" ", expand=True) 
 data[["Warm_price", "Warm_price_unit"]] = data["Warm_price"].str.split(" ", expand=True)
 data["Street"].replace(",", "", regex=True, inplace=True)
 data["Apt_size"].replace(",", ".", regex=True, inplace=True)
+data["Apt_size"] = pd.to_numeric(data["Apt_size"],errors='coerce')
 data["Cold_price"].replace(",", ".", regex=True, inplace=True)
-data["Cold_price_per_sqm"].replace(",", ".", regex=True, inplace=True)
+data["Cold_price"] = pd.to_numeric(data["Cold_price"],errors='coerce')
+data["Nr_of_rooms"].replace(",",".",regex=True, inplace=True)
+data["Nr_of_rooms"] = pd.to_numeric(data["Nr_of_rooms"], errors='coerce')
+data['Cold_price_per_sqm'] = (data["Cold_price"]/data["Apt_size"])
+
+data['latitude'] = ''
+data['longitude'] = ''
+data['District'] = ''
+data['Cold_price_per_sqm_unit'] = '€/m²'
+
+data = data.dropna(subset=['Region_and_country','Apt_size','Cold_price','Nr_of_rooms'])
+data = data.drop(data[data['Apt_size'] == 0].index)
 
 
-data['Latitude'] = ''
-data['Longitude'] = ''
 
-data = data.drop(data[data['Region_and_country'] == 'NA'].index)
-
-
-
-for i in range(data.shape[1]):
+for i in data.index:
     temp = re.findall(r'(.*?),',data['Region_and_country'][i])
     
     temp_var = temp[1]
-    print(temp_var)
+    data['District'][i] = temp_var
 
     lat = latitude[temp_var]
     longi = longitude[temp_var]
 
-    data['Longitude'][i] = longi
-    data['Latitude'][i] = lat
+    data['longitude'][i] = longi
+    data['latitude'][i] = lat
     
 
     
@@ -103,7 +105,7 @@ data = data[
         "ID",
         "Property_type",
         "Street",
-        "Region_and_country",
+        "District",
         "Apt_size",
         "Apt_size_unit",
         "Floor",
@@ -112,8 +114,8 @@ data = data[
         "Nr_of_bathrooms",
         "Cold_price",
         "Cold_price_unit",
-        "Cold_price_per_sqm",
-        "Cold_price_per_sqm_unit",
+        'Cold_price_per_sqm',
+        'Cold_price_per_sqm_unit',
         "Warm_price",
         "Warm_price_unit",
         "Labels",
@@ -127,8 +129,8 @@ data = data[
         "Desc",
         "URL",
         "Time",
-        "Latitude",
-        "Longitude"
+        "latitude",
+        "longitude"
     ]
 ]
 
