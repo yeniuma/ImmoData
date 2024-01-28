@@ -42,7 +42,8 @@ def save_data(csv_export_name, df, exported_csvs):
     print(exported_csvs)
     if df.empty:
         return
-    elif csv_export_name in exported_csvs:
+
+    if csv_export_name in exported_csvs:
         df.to_csv(csv_export_name, mode="a", encoding="utf-8-sig", header=False)
     else:
         df.to_csv(csv_export_name, encoding="utf-8-sig")

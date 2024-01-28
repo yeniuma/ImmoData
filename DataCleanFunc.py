@@ -5,7 +5,7 @@ import re
 
 path = "F:/ImmoData/exports"
 csv_files = glob.glob(path + "/*.csv")
-df_list = (pd.read_csv(file,keep_default_na=False) for file in csv_files)
+df_list = (pd.read_csv(file, keep_default_na=False) for file in csv_files)
 data = pd.concat(df_list, ignore_index=True)
 
 latitude = {
@@ -31,7 +31,7 @@ latitude = {
     " 20. Bezirk": "48.236276510701444",
     " 21. Bezirk": "48.27350702061701",
     " 22. Bezirk": "48.23047911886208",
-    " 23. Bezirk": "48.142783280562675"
+    " 23. Bezirk": "48.142783280562675",
 }
 
 
@@ -58,47 +58,45 @@ longitude = {
     " 20. Bezirk": "16.377594032273304",
     " 21. Bezirk": "16.407138640775035",
     " 22. Bezirk": "16.46567122425539",
-    " 23. Bezirk": "16.29925805592741"
+    " 23. Bezirk": "16.29925805592741",
 }
 
 
-
 data[["Apt_size", "Apt_size_unit"]] = data["Apt_size"].str.split(" ", expand=True)
-data[["Cold_price", "Cold_price_unit"]] = data["Cold_price"].str.split(" ", expand=True) 
+data[["Cold_price", "Cold_price_unit"]] = data["Cold_price"].str.split(" ", expand=True)
 data[["Warm_price", "Warm_price_unit"]] = data["Warm_price"].str.split(" ", expand=True)
 data["Street"].replace(",", "", regex=True, inplace=True)
 data["Apt_size"].replace(",", ".", regex=True, inplace=True)
-data["Apt_size"] = pd.to_numeric(data["Apt_size"],errors='coerce')
+data["Apt_size"] = pd.to_numeric(data["Apt_size"], errors="coerce")
 data["Cold_price"].replace(",", ".", regex=True, inplace=True)
-data["Cold_price"] = pd.to_numeric(data["Cold_price"],errors='coerce')
-data["Nr_of_rooms"].replace(",",".",regex=True, inplace=True)
-data["Nr_of_rooms"] = pd.to_numeric(data["Nr_of_rooms"], errors='coerce')
-data['Cold_price_per_sqm'] = (data["Cold_price"]/data["Apt_size"])
+data["Cold_price"] = pd.to_numeric(data["Cold_price"], errors="coerce")
+data["Nr_of_rooms"].replace(",", ".", regex=True, inplace=True)
+data["Nr_of_rooms"] = pd.to_numeric(data["Nr_of_rooms"], errors="coerce")
+data["Cold_price_per_sqm"] = data["Cold_price"] / data["Apt_size"]
 
-data['latitude'] = ''
-data['longitude'] = ''
-data['District'] = ''
-data['Cold_price_per_sqm_unit'] = '€/m²'
+data["latitude"] = ""
+data["longitude"] = ""
+data["District"] = ""
+data["Cold_price_per_sqm_unit"] = "€/m²"
 
-data = data.dropna(subset=['Region_and_country','Apt_size','Cold_price','Nr_of_rooms'])
-data = data.drop(data[data['Apt_size'] == 0].index)
-
+data = data.dropna(
+    subset=["Region_and_country", "Apt_size", "Cold_price", "Nr_of_rooms"]
+)
+data = data.drop(data[data["Apt_size"] == 0].index)
 
 
 for i in data.index:
-    temp = re.findall(r'(.*?),',data['Region_and_country'][i])
-    
+    temp = re.findall(r"(.*?),", data["Region_and_country"][i])
+
     temp_var = temp[1]
-    data['District'][i] = temp_var
+    data["District"][i] = temp_var
 
     lat = latitude[temp_var]
     longi = longitude[temp_var]
 
-    data['longitude'][i] = longi
-    data['latitude'][i] = lat
-    
+    data["longitude"][i] = longi
+    data["latitude"][i] = lat
 
-    
 
 data = data[
     [
@@ -114,8 +112,8 @@ data = data[
         "Nr_of_bathrooms",
         "Cold_price",
         "Cold_price_unit",
-        'Cold_price_per_sqm',
-        'Cold_price_per_sqm_unit',
+        "Cold_price_per_sqm",
+        "Cold_price_per_sqm_unit",
         "Warm_price",
         "Warm_price_unit",
         "Labels",
@@ -130,7 +128,7 @@ data = data[
         "URL",
         "Time",
         "latitude",
-        "longitude"
+        "longitude",
     ]
 ]
 

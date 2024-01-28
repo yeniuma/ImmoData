@@ -22,7 +22,7 @@ nums = {
     "sechs": "6",
     "sieben": "7",
     "acht": "8",
-    "neun": "9"
+    "neun": "9",
 }
 
 # service_path = Service(executable_path="F:/ChromeDriver/chromedriver.exe")
