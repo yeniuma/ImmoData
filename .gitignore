@@ -3,3 +3,4 @@ exports
 audio
 model
 transformed
+__pycache__
