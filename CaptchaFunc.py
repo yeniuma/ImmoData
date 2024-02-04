@@ -1,6 +1,3 @@
-#from selenium import webdriver
-#from selenium.webdriver.chrome.service import Service
-#from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -12,7 +9,7 @@ import requests
 import soundfile
 import re
 
-#page = "https://www.immobilienscout24.de/Suche/at/wien/wien/wohnung-mieten?pricetype=rentpermonth&enteredFrom=result_list"
+
 nums = {
     "null": "0",
     "ein": "1",
@@ -26,12 +23,6 @@ nums = {
     "neun": "9",
 }
 
-#service_path = Service(executable_path="F:/ChromeDriver/chromedriver.exe")
-#options = Options()
-#driver = webdriver.Chrome(service=service_path, options=options)
-#driver.get(page)
-#time.sleep(1)
-
 
 def check_if_captcha_page(driver):
     if len(driver.find_elements(By.CLASS_NAME, "geetest_radar_tip")) == 1:
@@ -43,14 +34,13 @@ def click_not_robot(driver):
     print("click_not_robot")
     try:
         WebDriverWait(driver, 10).until(
-        EC.presence_of_element_located((By.CLASS_NAME, "geetest_radar_tip"))
+            EC.presence_of_element_located((By.CLASS_NAME, "geetest_radar_tip"))
         ).click()
         time.sleep(5)
         driver.find_element(By.CLASS_NAME, "geetest_popup_box")
         return True
-    except (NoSuchElementException,TimeoutException):
+    except (NoSuchElementException, TimeoutException):
         return False
-
 
 
 def enter_captcha_voice(driver):
@@ -69,8 +59,10 @@ def save_captcha_audio(driver, path):
     )
     content = requests.get(audio_src).content
     open(path + "/audio/captcha_file.wav", "wb").write(content)
-    data, samplerate = soundfile.read(path +"/audio/captcha_file.wav")
-    soundfile.write(path + "/audio/captcha_file_new.wav", data, samplerate, subtype="PCM_16")
+    data, samplerate = soundfile.read(path + "/audio/captcha_file.wav")
+    soundfile.write(
+        path + "/audio/captcha_file_new.wav", data, samplerate, subtype="PCM_16"
+    )
 
 
 def attempt_captcha(driver, path):

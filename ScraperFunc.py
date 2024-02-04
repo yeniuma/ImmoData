@@ -25,12 +25,71 @@ class textHelper:
         return self._text
 
 
+def get_parameters_from_user():
+    parameters_dict = {
+        "city": "",
+        "min_price": "",
+        "max_price": "",
+        "min_sqm": "",
+        "max_sqm": "",
+        "min_rooms": "",
+        "max_rooms": "",
+    }
+    print("Please input the German name of the city you want to scrape listings for:")
+    parameters_dict["city"] = str(input())
+
+    print("Please input the minimum price or press Enter to skip:")
+    parameters_dict["min_price"] = float(input())
+
+    print("Please input the maximum price or press Enter to skip:")
+    parameters_dict["max_price"] = float(input())
+
+    print("Please input the minimum sqm or press Enter to skip:")
+    parameters_dict["min_sqm"] = float(input())
+
+    print("Please input the maximum sqm or press Enter to skip:")
+    parameters_dict["max_sqm"] = float(input())
+
+    print("Please input the minimum number of rooms or press Enter to skip:")
+    parameters_dict["min_rooms"] = int(input())
+
+    print("Please input the maximum number of rooms or press Enter to skip:")
+    parameters_dict["max_rooms"] = int(input())
+
+    return parameters_dict
+
+
+def check_libraries():
+    exports = "./exports"
+    audio = "./audio"
+    if not os.path.exists(exports):
+        print("nincs export")
+        os.mkdir(exports)
+    if not os.path.exists(audio):
+        print("nincs audio")
+        os.mkdir(audio)
+
+
+def url_builder(
+    city, min_price="", max_price="", min_sqm="", max_sqm="", min_rooms="", max_rooms=""
+):
+    filter_dict = {
+        "price": f"price={min_price}-{max_price}",
+        "sqm": f"livingspace={min_sqm}-{max_sqm}",
+        "num_rooms": f"numberofrooms={min_rooms}-{max_rooms}",
+    }
+    city = city.lower()
+    result = "&".join(filter_dict.values()) + "&"
+    url = f"https://www.immobilienscout24.de/Suche/at/{city}/{city}/wohnung-mieten?{result}pricetype=rentpermonth&enteredFrom=result_list"
+    return url
+
+
 def driver_startup(url):
     service_path = Service(executable_path="F:/ChromeDriver/chromedriver.exe")
     options = Options()
-    # options.add_argument('--headless=new')
-    # options.add_argument('--disable-notifications')
-    # options.add_argument("--mute-audio")
+    #options.add_argument('--headless=new')
+    options.add_argument('--disable-notifications')
+    options.add_argument("--mute-audio")
     driver = webdriver.Chrome(service=service_path, options=options)
     driver.get(url)
     time.sleep(10)
@@ -109,203 +168,10 @@ def check_labels_element(driver):
     return ",".join([k.text for k in labels_child_elements if k.text != ""])
 
 
-#def scrape_immoscout_rentals(driver, city):
-#    path = os.listdir("/ImmoData")
-#
-#    timestamp = time.time()
-#
-#    i = 1
-#    while True:
-#        print("{} {} {} {}".format("scraping page", i, "from", city))
-#        all_csvs = list(filter(lambda f: f.endswith(".csv"), path))
-#        ids_to_read = check_if_id_already_in_export(driver, all_csvs)
-#
-#        id_list = []
-#        property_type_list = []
-#        address_list = []
-#        region_and_country_list = []
-#        street_list = []
-#        apartment_size_list = []
-#        floor_list = []
-#        able_to_move_in_list = []
-#        rooms_list = []
-#        bathrooms_list = []
-#        cold_price_list = []
-#        warm_price_list = []
-#        labels_list = []
-#        pets_allowed_list = []
-#        year_built_list = []
-#        heating_list = []
-#        heating_price_list = []
-#        parking_list = []
-#        deposit_list = []
-#        status_list = []
-#        desc_list = []
-#        property_url_list = []
-#        time_list = []
-#
-#        parent_element = driver.find_element(by=By.ID, value="resultListItems")
-#        num_listings = len(
-#            parent_element.find_elements(by=By.XPATH, value="./child::*")
-#        )
-#
-#        for j in range(num_listings):
-#            parent_element = WebDriverWait(driver, 30000).until(
-#                EC.presence_of_element_located((By.ID, "resultListItems"))
-#            )
-#            listing = parent_element.find_elements(by=By.XPATH, value="./child::*")[j]
-#            if listing.get_attribute("class") != "result-list__listing ":
-#                continue
-#
-#            _id = listing.get_attribute("data-id")
-#            if _id not in ids_to_read:
-#                continue
-#
-#            listing.find_element(
-#                by=By.CSS_SELECTOR,
-#                value=".result-list-entry__brand-title.font-h6.onlyLarge.font-ellipsis.font-regular.nine-tenths",
-#            ).click()
-#            time.sleep(3)
-#
-#            property_type = check_find_elements(
-#                ".is24qa-typ.grid-item.three-fifths", driver, By.CSS_SELECTOR
-#            ).text
-#            address = check_find_elements(
-#                ".address-block", driver, By.CSS_SELECTOR
-#            ).text
-#            region_and_country = check_find_elements(
-#                ".zip-region-and-country", driver, By.CSS_SELECTOR
-#            ).text
-#            street = check_find_elements(
-#                ".block.font-nowrap.print-hide", driver, By.CSS_SELECTOR
-#            ).text
-#            apartment_size = check_find_elements(
-#                ".is24qa-wohnflaeche-ca.grid-item.three-fifths", driver, By.CSS_SELECTOR
-#            ).text
-#            floor = check_find_elements(
-#                ".is24qa-etage.grid-item.three-fifths", driver, By.CSS_SELECTOR
-#            ).text
-#            able_to_move_in = check_find_elements(
-#                ".is24qa-bezugsfrei-ab.grid-item.three-fifths", driver, By.CSS_SELECTOR
-#            ).text
-#            rooms = check_find_elements(
-#                ".is24qa-zimmer.grid-item.three-fifths", driver, By.CSS_SELECTOR
-#            ).text
-#            bathrooms = check_find_elements(
-#                ".is24qa-badezimmer.grid-item.three-fifths", driver, By.CSS_SELECTOR
-#            ).text
-#            cold_price = (
-#                check_find_elements(
-#                    ".is24qa-kaltmiete.grid-item.three-fifths", driver, By.CSS_SELECTOR
-#                )
-#                .text.replace(".", "")
-#                .replace(",", ".")
-#            )
-#            warm_price = check_find_elements(
-#                ".is24qa-geschaetzte-warmmiete-main.is24-value.font-semibold",
-#                driver,
-#                By.CSS_SELECTOR,
-#            ).text
-#            labels = check_labels_element(driver)
-#            pets_allowed = check_find_elements(
-#                ".is24qa-haustiere.grid-item.three-fifths", driver, By.CSS_SELECTOR
-#            ).text
-#            year_built = check_find_elements(
-#                ".is24qa-baujahr.grid-item.three-fifths", driver, By.CSS_SELECTOR
-#            ).text
-#            heating = check_find_elements(
-#                ".is24qa-heizungsart.grid-item.three-fifths", driver, By.CSS_SELECTOR
-#            ).text
-#            heating_price = check_find_elements(
-#                ".is24qa-heizkosten.grid-item.three-fifths", driver, By.CSS_SELECTOR
-#            ).text
-#            parking = check_find_elements(
-#                ".is24qa-garage-stellplatz.grid-item.three-fifths",
-#                driver,
-#                By.CSS_SELECTOR,
-#            ).text
-#            deposit = check_find_elements(
-#                ".is24qa-kaution-o-genossenschaftsanteile", driver, By.CSS_SELECTOR
-#            ).text
-#            status = check_find_elements(
-#                ".is24qa-objektzustand.grid-item.three-fifths", driver, By.CSS_SELECTOR
-#            ).text
-#            desc = check_find_elements(
-#                ".is24qa-objektbeschreibung.text-content.short-text",
-#                driver,
-#                By.CSS_SELECTOR,
-#            ).text
-#            property_url = driver.current_url
-#
-#            id_list.append(_id)
-#            property_type_list.append(property_type)
-#            address_list.append(address)
-#            region_and_country_list.append(region_and_country)
-#            street_list.append(street)
-#            apartment_size_list.append(apartment_size)
-#            floor_list.append(floor)
-#            able_to_move_in_list.append(able_to_move_in)
-#            rooms_list.append(rooms)
-#            bathrooms_list.append(bathrooms)
-#            cold_price_list.append(cold_price)
-#            warm_price_list.append(warm_price)
-#            labels_list.append(labels)
-#            pets_allowed_list.append(pets_allowed)
-#            year_built_list.append(year_built)
-#            heating_list.append(heating)
-#            heating_price_list.append(heating_price)
-#            parking_list.append(parking)
-#            deposit_list.append(deposit)
-#            status_list.append(status)
-#            desc_list.append(desc)
-#            property_url_list.append(property_url)
-#            time_list.append(timestamp)
-#
-#            driver.back()
-#            time.sleep(5)
-#
-#        temp_df = pd.DataFrame(
-#            {
-#                "ID": id_list,
-#                "Property_type": property_type_list,
-#                "Street": street_list,
-#                "Region_and_country": region_and_country_list,
-#                "Apt_size": apartment_size_list,
-#                "Floor": floor_list,
-#                "Move_in": able_to_move_in_list,
-#                "Nr_of_rooms": rooms_list,
-#                "Nr_of_bathrooms": bathrooms_list,
-#                "Cold_price": cold_price_list,
-#                "Warm_price": warm_price_list,
-#                "Labels": labels_list,
-#                "Pets_allowed": pets_allowed_list,
-#                "Year_built": year_built_list,
-#                "Heating": heating_list,
-#                "Heating_price": heating_price_list,
-#                "Parking": parking_list,
-#                "Deposit": deposit_list,
-#                "Status": status_list,
-#                "Desc": desc_list,
-#                "URL": property_url_list,
-#                "Time": time_list,
-#            }
-#        )
-#        csv_export_name = f"{city}_rentals_{i}_page.csv"
-#        save_data(csv_export_name, temp_df, all_csvs)
-#
-#        button_check = check_for_last_button(driver)
-#        if button_check[0]:
-#            break
-#        button_check[1].click()
-#        i += 1
-#        time.sleep(randrange(5, 10))
-
-
 def scrape_immoscout_rentals(driver, city):
     files = os.listdir("/ImmoData")
     path = "/ImmoData/exports"
     timestamp = time.time()
-
 
     CF.solve_captcha(driver, path)
     CF.accept_cookies(driver)
@@ -318,12 +184,29 @@ def scrape_immoscout_rentals(driver, city):
         ids_to_read = check_if_id_already_in_export(driver, all_csvs)
 
         data = {
-            "ID": [], "Property_type": [], "Street": [], "Region_and_country": [], "Address": [],
-            "Apt_size": [], "Floor": [], "Move_in": [], "Nr_of_rooms": [],
-            "Nr_of_bathrooms": [], "Cold_price": [], "Warm_price": [], "Labels": [],
-            "Pets_allowed": [], "Year_built": [], "Heating": [], "Heating_price": [],
-            "Parking": [], "Deposit": [], "Status": [], "Desc": [],
-            "URL": [], "Time": []
+            "ID": [],
+            "Property_type": [],
+            "Street": [],
+            "Region_and_country": [],
+            "Address": [],
+            "Apt_size": [],
+            "Floor": [],
+            "Move_in": [],
+            "Nr_of_rooms": [],
+            "Nr_of_bathrooms": [],
+            "Cold_price": [],
+            "Warm_price": [],
+            "Labels": [],
+            "Pets_allowed": [],
+            "Year_built": [],
+            "Heating": [],
+            "Heating_price": [],
+            "Parking": [],
+            "Deposit": [],
+            "Status": [],
+            "Desc": [],
+            "URL": [],
+            "Time": [],
         }
 
         parent_element = driver.find_element(by=By.ID, value="resultListItems")
@@ -344,7 +227,10 @@ def scrape_immoscout_rentals(driver, city):
             if _id not in ids_to_read:
                 continue
 
-            listing.find_element(by=By.CSS_SELECTOR, value=".result-list-entry__brand-title.font-h6.onlyLarge.font-ellipsis.font-regular.nine-tenths").click()
+            listing.find_element(
+                by=By.CSS_SELECTOR,
+                value=".result-list-entry__brand-title.font-h6.onlyLarge.font-ellipsis.font-regular.nine-tenths",
+            ).click()
             time.sleep(3)
             print(f"attribútomok előtt:{i}")
             attributes = [
@@ -358,7 +244,10 @@ def scrape_immoscout_rentals(driver, city):
                 (".is24qa-zimmer.grid-item.three-fifths", "Nr_of_rooms"),
                 (".is24qa-badezimmer.grid-item.three-fifths", "Nr_of_bathrooms"),
                 (".is24qa-kaltmiete.grid-item.three-fifths", "Cold_price"),
-                (".is24qa-geschaetzte-warmmiete-main.is24-value.font-semibold", "Warm_price"),
+                (
+                    ".is24qa-geschaetzte-warmmiete-main.is24-value.font-semibold",
+                    "Warm_price",
+                ),
                 (".is24qa-haustiere.grid-item.three-fifths", "Pets_allowed"),
                 (".is24qa-baujahr.grid-item.three-fifths", "Year_built"),
                 (".is24qa-heizungsart.grid-item.three-fifths", "Heating"),
@@ -371,11 +260,17 @@ def scrape_immoscout_rentals(driver, city):
 
             for attr in attributes:
                 if attr[1] == "Cold_price":
-                    data[attr[1]].append(check_find_elements(attr[0], driver, By.CSS_SELECTOR).text.replace(".", ""))
+                    data[attr[1]].append(
+                        check_find_elements(
+                            attr[0], driver, By.CSS_SELECTOR
+                        ).text.replace(".", "")
+                    )
                 else:
-                    data[attr[1]].append(check_find_elements(attr[0], driver, By.CSS_SELECTOR).text)
-                
-            data['Labels'].append(check_labels_element(driver))
+                    data[attr[1]].append(
+                        check_find_elements(attr[0], driver, By.CSS_SELECTOR).text
+                    )
+
+            data["Labels"].append(check_labels_element(driver))
             data["ID"].append(_id)
             data["URL"].append(driver.current_url)
             print(f"time append előtt:{i}")
@@ -395,15 +290,3 @@ def scrape_immoscout_rentals(driver, city):
         print(f"+= előtt:{i}")
         i += 1
         time.sleep(randrange(5, 10))
-
-
-# captcha
-# cookie
-# while true 
-#   captcha        
-#   get relevant ids
-#      for
-#       get data
-#       save data
-#   if ther are more pages
-#       get next page
