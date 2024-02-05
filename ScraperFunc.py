@@ -12,6 +12,7 @@ import os
 import speech_recognition as sr
 import CaptchaFunc as CF
 
+
 NA = "NA"
 r = sr.Recognizer()
 
@@ -23,6 +24,24 @@ class textHelper:
     @property
     def text(self) -> str:
         return self._text
+
+def check_input_type(type_wanted):
+    if type_wanted == str:
+        while True:
+            input_text = input()
+            if input_text.isdigit():
+                print("Try again!")
+            else:
+                return type_wanted(input_text)
+    else:
+        while True:
+            input_text = input()
+            if input_text == '':
+                return ''
+            if input_text.isalpha():
+                print("Try again!")
+            else:
+                return type_wanted(input_text)
 
 
 def get_parameters_from_user():
@@ -36,25 +55,25 @@ def get_parameters_from_user():
         "max_rooms": "",
     }
     print("Please input the German name of the city you want to scrape listings for:")
-    parameters_dict["city"] = str(input())
+    parameters_dict["city"] = check_input_type(str)
 
     print("Please input the minimum price or press Enter to skip:")
-    parameters_dict["min_price"] = float(input())
+    parameters_dict["min_price"] = check_input_type(float)
 
     print("Please input the maximum price or press Enter to skip:")
-    parameters_dict["max_price"] = float(input())
+    parameters_dict["max_price"] = check_input_type(float)
 
     print("Please input the minimum sqm or press Enter to skip:")
-    parameters_dict["min_sqm"] = float(input())
+    parameters_dict["min_sqm"] = check_input_type(float)
 
     print("Please input the maximum sqm or press Enter to skip:")
-    parameters_dict["max_sqm"] = float(input())
+    parameters_dict["max_sqm"] = check_input_type(float)
 
     print("Please input the minimum number of rooms or press Enter to skip:")
-    parameters_dict["min_rooms"] = int(input())
+    parameters_dict["min_rooms"] = check_input_type(int)
 
     print("Please input the maximum number of rooms or press Enter to skip:")
-    parameters_dict["max_rooms"] = int(input())
+    parameters_dict["max_rooms"] = check_input_type(int)
 
     return parameters_dict
 
@@ -63,12 +82,10 @@ def check_libraries():
     exports = "./exports"
     audio = "./audio"
     if not os.path.exists(exports):
-        print("nincs export")
         os.mkdir(exports)
     if not os.path.exists(audio):
-        print("nincs audio")
         os.mkdir(audio)
-
+  
 
 def url_builder(
     city, min_price="", max_price="", min_sqm="", max_sqm="", min_rooms="", max_rooms=""
@@ -97,15 +114,13 @@ def driver_startup(url):
 
 
 def save_data(csv_export_name, df, exported_csvs):
-    print(csv_export_name)
-    print(exported_csvs)
     if df.empty:
         return
 
     if csv_export_name in exported_csvs:
-        df.to_csv(csv_export_name, mode="a", encoding="utf-8-sig", header=False)
+        df.to_csv('./exports/' + csv_export_name, mode="a", encoding="utf-8-sig", header=False)
     else:
-        df.to_csv(csv_export_name, encoding="utf-8-sig")
+        df.to_csv('./exports/' + csv_export_name, encoding="utf-8-sig")
 
 
 def check_for_last_button(driver):
@@ -170,7 +185,7 @@ def check_labels_element(driver):
 
 def scrape_immoscout_rentals(driver, city):
     files = os.listdir("/ImmoData")
-    path = "/ImmoData/exports"
+    path = "/ImmoData"
     timestamp = time.time()
 
     CF.solve_captcha(driver, path)
@@ -213,7 +228,6 @@ def scrape_immoscout_rentals(driver, city):
         num_listings = len(
             parent_element.find_elements(by=By.XPATH, value="./child::*")
         )
-        print(f"for előtt:{i}")
         for j in range(num_listings):
             parent_element = WebDriverWait(driver, 30000).until(
                 EC.presence_of_element_located((By.ID, "resultListItems"))
@@ -232,7 +246,6 @@ def scrape_immoscout_rentals(driver, city):
                 value=".result-list-entry__brand-title.font-h6.onlyLarge.font-ellipsis.font-regular.nine-tenths",
             ).click()
             time.sleep(3)
-            print(f"attribútomok előtt:{i}")
             attributes = [
                 (".is24qa-typ.grid-item.three-fifths", "Property_type"),
                 (".address-block", "Address"),
@@ -273,20 +286,15 @@ def scrape_immoscout_rentals(driver, city):
             data["Labels"].append(check_labels_element(driver))
             data["ID"].append(_id)
             data["URL"].append(driver.current_url)
-            print(f"time append előtt:{i}")
             data["Time"].append(timestamp)
-            print(f"time append után:{i}")
             driver.back()
             time.sleep(5)
-        print(f"for után:{i}")
         temp_df = pd.DataFrame(data)
         csv_export_name = f"{city}_rentals_{i}_page.csv"
         save_data(csv_export_name, temp_df, all_csvs)
-        print(f"mentés után:{i}")
         button_check = check_for_last_button(driver)
         if button_check[0]:
             break
         button_check[1].click()
-        print(f"+= előtt:{i}")
         i += 1
         time.sleep(randrange(5, 10))

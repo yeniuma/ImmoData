@@ -1,6 +1,6 @@
 *.csv
 exports
 audio
-model
 transformed
 __pycache__
+model

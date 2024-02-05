@@ -1,5 +1,5 @@
 import ScraperFunc as SF
-
+import time
 #TODO: take apart SF.scrape_immoscout_rentals function somehow so it fits this flow:
 # captcha
 # cookie
@@ -13,7 +13,7 @@ import ScraperFunc as SF
 #       get next page
 
 
-parameters = SF.get_parameters_from_user
+parameters = SF.get_parameters_from_user()
 
 SF.check_libraries()
 
@@ -26,6 +26,7 @@ page = SF.url_builder(
     parameters["min_rooms"],
     parameters["max_rooms"],
 )
+
 
 driver = SF.driver_startup(page)
 

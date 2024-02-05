@@ -58,7 +58,8 @@ def save_captcha_audio(driver, path):
         .get_attribute("src")
     )
     content = requests.get(audio_src).content
-    open(path + "/audio/captcha_file.wav", "wb").write(content)
+    with open(path + "/audio/captcha_file.wav", "wb") as myaudio:
+        myaudio.write(content)
     data, samplerate = soundfile.read(path + "/audio/captcha_file.wav")
     soundfile.write(
         path + "/audio/captcha_file_new.wav", data, samplerate, subtype="PCM_16"
