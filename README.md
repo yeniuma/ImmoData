@@ -128,9 +128,11 @@ Although the dashboard is in progress, the scraping script is totally ready to u
 <!-- USAGE EXAMPLES -->
 ## Usage
 
-After firing up the script with `main.py`, you only need to enter the text for the parameters you want to use. The `.csv` outputs will be written in the `exports` folder on a page-by-page basis.
+After firing up the script with `main.py`, you only need to enter the text for the parameters you want to use.
 
 <p align="left"><img src="./images/parameters.png" alt="parameters" /></p>
+
+The `.csv` outputs will be written in the `exports` folder on a page-by-page basis.
 
 <p align="right">(<a href="#readme-top">Back to top</a>)</p>
 
