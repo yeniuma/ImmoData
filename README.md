@@ -76,8 +76,7 @@
 
 <!-- ABOUT THE PROJECT -->
 ## About ImmoData
-
-![ImmoData demo][product-gif]
+<p align="center"><img src="https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExcmh1YzRheHB1dDR2cGVmeGhidzkxZ3M2dTM3azZ0M2MzYm85MmQ2MiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/LNx84Ug0tOfnmbThQg/giphy.gif" alt="animated" /></p>
 
 The main idea behind this project came from a need: I wanted to make some viz which would help us look for suitable apartments. The issue came when I realized, that there is no public API available for any of the Austrian rental websites, so I had to get creative and find a workaround to gather the data. 
 Although the dashboard is in progress, the scraping script is totally ready to use.
@@ -130,6 +129,8 @@ Although the dashboard is in progress, the scraping script is totally ready to u
 ## Usage
 
 After firing up the script with `main.py`, you only need to enter the text for the parameters you want to use. The `.csv` outputs will be written in the `exports` folder on a page-by-page basis.
+
+<p align="left"><img src="./images/parameters.png" alt="parameters" /></p>
 
 <p align="right">(<a href="#readme-top">Back to top</a>)</p>
 
@@ -188,7 +189,6 @@ Project Link: [https://github.com/yeniuma/ImmoData](https://github.com/yeniuma/I
 [issues-url]: https://github.com/yeniuma/ImmoData/issues
 [linkedin-shield]: https://img.shields.io/badge/-LinkedIn-black.svg?style=for-the-badge&logo=linkedin&colorB=555
 [linkedin-url]: https://www.linkedin.com/in/adrienn-manczal/
-[product-gif]: https://github.com/yeniuma/ImmoData/images/immodata_demo.gif
 [Python]: https://img.shields.io/badge/python-3670A0?style=for-the-badge&logo=python&logoColor=ffdd54
 [Python-url]: https://www.python.org/
 [Selenium]: https://img.shields.io/badge/selenium-43B02A.svg?&style=for-the-badge&logo=selenium&logoColor=white

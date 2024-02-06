@@ -31,7 +31,6 @@ def check_if_captcha_page(driver):
 
 
 def click_not_robot(driver):
-    print("click_not_robot")
     try:
         WebDriverWait(driver, 10).until(
             EC.presence_of_element_located((By.CLASS_NAME, "geetest_radar_tip"))
@@ -51,7 +50,6 @@ def enter_captcha_voice(driver):
 
 
 def save_captcha_audio(driver, path):
-    print("save_captcha")
     audio_src = (
         WebDriverWait(driver, 10)
         .until(EC.presence_of_element_located((By.CLASS_NAME, "geetest_music")))
@@ -67,7 +65,6 @@ def save_captcha_audio(driver, path):
 
 
 def attempt_captcha(driver, path):
-    print("attempt_captcha")
     r = sr.Recognizer()
     with sr.AudioFile(path + "/audio/captcha_file_new.wav") as source:
         audio = r.listen(source)
@@ -108,7 +105,6 @@ def attempt_captcha(driver, path):
 
 
 def refresh_captcha(driver):
-    print("refresh_captcha")
     WebDriverWait(driver, 10).until(
         EC.presence_of_element_located((By.CLASS_NAME, "geetest_refresh"))
     ).click()
@@ -128,7 +124,6 @@ def solve_captcha(driver, path):
 
 
 def accept_cookies(driver):
-    print("accept_cookies")
     button = driver.execute_script(
         """return document.querySelector('div#usercentrics-root').shadowRoot.querySelector('button[data-testid="uc-accept-all-button"]')"""
     )
