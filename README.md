@@ -97,7 +97,10 @@ Although the dashboard is in progress, the scraping script is totally ready to u
 
 <!-- GETTING STARTED -->
 ## Getting Started
-
+The project *assumes* that you have an already working Selenium installation on your computer. 
+Selenium requires a driver to interface with the chosen browser. Firefox, for example, requires geckodriver, which needs to be installed before the below examples can be run. Make sure it’s in your PATH, e. g., place it in /usr/bin or /usr/local/bin. Failure to observe this step will give you an error selenium.common.exceptions.WebDriverException: Message: ‘geckodriver’ executable needs to be in PATH.
+Other supported browsers will have their own drivers available. Please read the Selenium webdriver installation documentation [here](https://selenium-python.readthedocs.io/installation.html#drivers).
+For Google Chrome you can find the working webdriver [here](https://googlechromelabs.github.io/chrome-for-testing/). Check your Chrome version in the Settings - About Chrome and make sure to install the correct webdriver version.
 
 
 ### Installation
